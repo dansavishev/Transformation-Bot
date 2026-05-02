@@ -10,23 +10,35 @@ const groupMap = {
 
 async function loadChangelog() {
     try {
-        // Пытаемся несколько путей
-        let response = await fetch('/changelog/data/changelog.json');
-        
-        if (!response.ok) {
-            response = await fetch('./data/changelog.json');
-        }
-        
-        if (!response.ok) {
-            response = await fetch('../data/changelog.json');
+        let response;
+        let errorLog = [];
+
+        // Пути в приоритете: GitHub Pages → локальный → относительный
+        const pathsToTry = [
+            './data/changelog.json',                              // Если index.html в changelog/
+            '/Transformation-Bot/changelog/data/changelog.json',  // GitHub Pages full path
+            '../data/changelog.json',                             // Один уровень выше
+            '/data/changelog.json',                               // В корне
+            'data/changelog.json'                                 // Без ./
+        ];
+
+        for (const path of pathsToTry) {
+            try {
+                response = await fetch(path);
+                if (response.ok) {
+                    console.log(`✅ Загружено с: ${path}`);
+                    const data = await response.json();
+                    renderCards(data);
+                    return;
+                } else {
+                    errorLog.push(`${path}: ${response.status}`);
+                }
+            } catch (e) {
+                errorLog.push(`${path}: ${e.message}`);
+            }
         }
 
-        if (!response.ok) {
-            throw new Error('changelog.json не найден ни по одному пути');
-        }
-
-        const data = await response.json();
-        renderCards(data);
+        throw new Error(`changelog.json не найден. Пробовали: ${errorLog.join('; ')}`);
     } catch (error) {
         console.error('Ошибка загрузки:', error);
         document.getElementById('cardsScroll').innerHTML =
