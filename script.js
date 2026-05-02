@@ -1,48 +1,62 @@
-// Маппинг групп на CSS классы и иконки
+// Маппинг групп на CSS классы, иконки и цвета
 const groupMap = {
-    'Интерфейс': { class: 'interface', icon: '✨' },
-    'Админ. панель': { class: 'admin', icon: '⚙️' },
-    'Логика': { class: 'logic', icon: '🧠' },
-    'Баги': { class: 'bug', icon: '🐞' },
-    'Архитектура': { class: 'architecture', icon: '🧱' },
-    'Оптимизация': { class: 'optimization', icon: '⚡' }
+    'Интерфейс': { 
+        class: 'interface', 
+        icon: '🎨',
+        bgColor: '#FFF4E6',
+        iconBg: '#FFD699'
+    },
+    'Админ. панель': { 
+        class: 'admin', 
+        icon: '⚙️',
+        bgColor: '#F0E6FF',
+        iconBg: '#D9B3FF'
+    },
+    'Логика': { 
+        class: 'logic', 
+        icon: '⚡',
+        bgColor: '#E6F7FF',
+        iconBg: '#99D9FF'
+    },
+    'Баги': { 
+        class: 'bug', 
+        icon: '🔧',
+        bgColor: '#FFE6E6',
+        iconBg: '#FF9999'
+    },
+    'Архитектура': { 
+        class: 'architecture', 
+        icon: '🏗️',
+        bgColor: '#E6F5FF',
+        iconBg: '#99CCFF'
+    },
+    'Оптимизация': { 
+        class: 'optimization', 
+        icon: '⚡',
+        bgColor: '#E6FFE6',
+        iconBg: '#99FF99'
+    }
 };
 
 async function loadChangelog() {
     try {
-        let response;
-        let errorLog = [];
-
-        // Пути в приоритете: GitHub Pages → локальный → относительный
-        const pathsToTry = [
-            './data/changelog.json',                              // В корне (основной путь)
-            '/Transformation-Bot/data/changelog.json',            // GitHub Pages с репо именем
-            'data/changelog.json',                                // Без ./
-            '/data/changelog.json',                               // Абсолютный путь в корне
-            '../changelog/data/changelog.json'                    // Как backup
-        ];
-
-        for (const path of pathsToTry) {
-            try {
-                response = await fetch(path);
-                if (response.ok) {
-                    console.log(`✅ Загружено с: ${path}`);
-                    const data = await response.json();
-                    renderCards(data);
-                    return;
-                } else {
-                    errorLog.push(`${path}: ${response.status}`);
-                }
-            } catch (e) {
-                errorLog.push(`${path}: ${e.message}`);
-            }
+        // Пытаемся несколько путей
+        let response = await fetch('./data/changelog.json');
+        
+        if (!response.ok) {
+            response = await fetch('../data/changelog.json');
         }
 
-        throw new Error(`changelog.json не найден. Пробовали: ${errorLog.join('; ')}`);
+        if (!response.ok) {
+            throw new Error('changelog.json не найден');
+        }
+
+        const data = await response.json();
+        renderCards(data);
     } catch (error) {
         console.error('Ошибка загрузки:', error);
         document.getElementById('cardsScroll').innerHTML =
-            `<div class="error">❌ Ошибка загрузки: ${error.message}</div>`;
+            `<div class="error">Ошибка загрузки данных. Пожалуйста, обновите страницу.</div>`;
     }
 }
 
@@ -58,12 +72,18 @@ function renderCards(entries) {
 
     entries.forEach((entry) => {
         const group = entry.group || 'Обновление';
-        const groupInfo = groupMap[group] || { class: 'interface', icon: '📝' };
+        const groupInfo = groupMap[group] || { 
+            class: 'interface', 
+            icon: '📝',
+            bgColor: '#F5F5F5',
+            iconBg: '#E0E0E0'
+        };
         const date = formatDate(entry.date);
         const changes = entry.changes || [];
 
         const card = document.createElement('div');
         card.className = `card ${groupInfo.class}`;
+        card.style.backgroundColor = groupInfo.bgColor;
 
         let changesHtml = '';
         if (changes.length > 0) {
@@ -73,7 +93,7 @@ function renderCards(entries) {
         }
 
         card.innerHTML = `
-            <div class="card-icon">${groupInfo.icon}</div>
+            <div class="card-icon" style="background-color: ${groupInfo.iconBg}; border-radius: 12px; padding: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 24px;">${groupInfo.icon}</div>
             <div class="card-content">
                 <div class="card-date">${date}</div>
                 <div class="card-text"><strong>${escapeHtml(group)}</strong></div>
