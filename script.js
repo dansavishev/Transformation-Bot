@@ -15,11 +15,11 @@ async function loadChangelog() {
 
         // Пути в приоритете: GitHub Pages → локальный → относительный
         const pathsToTry = [
-            './data/changelog.json',                              // Если index.html в changelog/
-            '/Transformation-Bot/changelog/data/changelog.json',  // GitHub Pages full path
-            '../data/changelog.json',                             // Один уровень выше
-            '/data/changelog.json',                               // В корне
-            'data/changelog.json'                                 // Без ./
+            './data/changelog.json',                              // В корне (основной путь)
+            '/Transformation-Bot/data/changelog.json',            // GitHub Pages с репо именем
+            'data/changelog.json',                                // Без ./
+            '/data/changelog.json',                               // Абсолютный путь в корне
+            '../changelog/data/changelog.json'                    // Как backup
         ];
 
         for (const path of pathsToTry) {
