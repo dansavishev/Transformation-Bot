@@ -11,12 +11,21 @@ from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+# Загружаем .env из корня проекта
+_project_root = Path(__file__).parent.parent
+_env_file = _project_root / ".env"
+if _env_file.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_file)
+    except ImportError:
+        pass
+
 # Добавляем папку changelog в sys.path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from extractor import get_new_changes, save_processed_dates
 from transformer import process_changes
-from github_sync import sync_to_github
 
 # Логирование
 log_dir = Path(__file__).parent / "logs"
@@ -70,37 +79,43 @@ class ProgressFileHandler(FileSystemEventHandler):
         # Небольшая задержка (файл может ещё писаться)
         time.sleep(2)
         
-        logger.info("📝 progress.md изменён, обработка...")
-        
+        logger.info("[STEP 1] progress.md изменён, начало обработки...")
+
         processed_file = Path(self.changelog_dir) / "data" / "processed_dates.json"
-        
+
         try:
             # Выделяем новые изменения
             new_changes = get_new_changes(self.progress_path, str(processed_file))
-            
+
             if not new_changes:
-                logger.info("ℹ️  Новых изменений нет")
+                logger.info("[STEP 2] Новых изменений нет — все даты уже обработаны")
                 return
-            
-            logger.info(f"✅ Найдено новых изменений: {len(new_changes)} дат(ы)")
-            
+
+            dates_found = [c['date_normalized'] for c in new_changes]
+            logger.info(f"[STEP 2] Найдено новых дат: {len(new_changes)} — {dates_found}")
+
             # Обрабатываем через LLM
+            logger.info(f"[STEP 3] Отправка в LLM ({self.llm_model})...")
             success = process_changes(
                 new_changes,
                 self.llm_model,
                 self.api_key,
                 self.changelog_dir
             )
-            
+
             if success:
-                logger.info("✅ Pipeline выполнен успешно")
-                # Синхронизируем с GitHub (pending.json добавлен)
-                changelog_json = Path(self.changelog_dir) / "data" / "pending.json"
-                sync_to_github(self.project_dir, str(changelog_json))
-                # Синхронизируем с локальной копией для веб-сайта
-                sync_to_web(self.changelog_dir, self.project_dir)
+                pending_count = 0
+                pending_file = Path(self.changelog_dir) / "data" / "pending.json"
+                try:
+                    import json
+                    with open(pending_file) as f:
+                        pending_count = len(json.load(f))
+                except Exception:
+                    pass
+                logger.info(f"[STEP 3] LLM обработал успешно. pending.json содержит {pending_count} записей")
+                logger.info("[STEP 4] Pipeline завершён. Ожидание подтверждения в адмн-боте.")
             else:
-                logger.warning("⚠️  Pipeline завершился с ошибками")
+                logger.warning("[STEP 3] Pipeline завершился с ошибками — LLM не вернул результат")
         
         except Exception as e:
             logger.error(f"❌ Ошибка при обработке: {e}", exc_info=True)
