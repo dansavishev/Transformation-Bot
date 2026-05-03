@@ -5,6 +5,8 @@ import shutil
 import asyncio
 import logging
 import os
+import subprocess
+from datetime import datetime
 from pathlib import Path
 from aiogram import Router
 from aiogram.filters import CommandStart
@@ -46,6 +48,36 @@ def _merge_to_changelog(entries: list) -> Path:
     web_dest = Path("/opt/transformation-bot/data/changelog.json")
     web_dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(changelog_file, web_dest)
+
+    # ДОЛГОСРОЧНОЕ РЕШЕНИЕ: автоматический git push
+    try:
+        subprocess.run(
+            ['git', 'add', 'data/changelog.json'],
+            cwd=str(PROJECT_DIR),
+            check=True,
+            capture_output=True,
+            timeout=10
+        )
+        subprocess.run(
+            ['git', 'commit', '-m', f'Publish changelog [{datetime.now().isoformat()}]'],
+            cwd=str(PROJECT_DIR),
+            check=False,  # не критично если нечего коммитить
+            capture_output=True,
+            timeout=10
+        )
+        subprocess.run(
+            ['git', 'push', 'origin', 'master'],
+            cwd=str(PROJECT_DIR),
+            check=True,
+            capture_output=True,
+            timeout=30
+        )
+        logger.info("Changelog published to GitHub successfully")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Git operation failed: {e.stderr.decode() if e.stderr else str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error during git push: {e}")
+
     return web_dest
 
 

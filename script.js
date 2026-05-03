@@ -40,11 +40,11 @@ const groupMap = {
 
 async function loadChangelog() {
     try {
-        // Пытаемся несколько путей
-        let response = await fetch('./data/changelog.json');
-        
+        // Пытаемся несколько путей с cache-busting
+        let response = await fetch(`./data/changelog.json?t=${Date.now()}`);
+
         if (!response.ok) {
-            response = await fetch('../data/changelog.json');
+            response = await fetch(`../data/changelog.json?t=${Date.now()}`);
         }
 
         if (!response.ok) {
