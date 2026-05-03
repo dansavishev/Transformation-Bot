@@ -41,11 +41,16 @@ const groupMap = {
 async function loadChangelog() {
     try {
         // Пытаемся несколько путей с cache-busting
-        // Используем changelog-api папку чтобы избежать кеша GitHub Pages
-        let response = await fetch(`./changelog-api/current.json?t=${Date.now()}`);
+        // Используем raw.githubusercontent.com чтобы обойти GitHub Pages кеш
+        let response = await fetch(`https://raw.githubusercontent.com/dansavishev/Transformation-Bot/master/data/changelog.json?t=${Date.now()}`);
 
         if (!response.ok) {
-            response = await fetch(`../changelog-api/current.json?t=${Date.now()}`);
+            // fallback на локальный файл если API недоступен
+            response = await fetch(`./data/changelog.json?t=${Date.now()}`);
+        }
+
+        if (!response.ok) {
+            response = await fetch(`../data/changelog.json?t=${Date.now()}`);
         }
 
         if (!response.ok) {
