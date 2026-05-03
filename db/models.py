@@ -1,0 +1,41 @@
+CREATE_USERS = """
+CREATE TABLE IF NOT EXISTS users (
+    user_id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER UNIQUE NOT NULL,
+    name        TEXT,
+    username    TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+"""
+
+CREATE_MESSAGES = """
+CREATE TABLE IF NOT EXISTS messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    role       TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+"""
+
+CREATE_USER_PROFILES = """
+CREATE TABLE IF NOT EXISTS user_profiles (
+    user_id    INTEGER PRIMARY KEY,
+    summary    TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+"""
+
+CREATE_SUMMARIES_HISTORY = """
+CREATE TABLE IF NOT EXISTS summaries_history (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    summary    TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+"""
+
+ALL_TABLES = [CREATE_USERS, CREATE_MESSAGES, CREATE_USER_PROFILES, CREATE_SUMMARIES_HISTORY]
