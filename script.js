@@ -41,20 +41,11 @@ const groupMap = {
 async function loadChangelog() {
     try {
         // Пытаемся несколько путей с cache-busting
-        // Используем changelog-v2.json чтобы избежать кеша GitHub Pages
-        let response = await fetch(`./data/changelog-v2.json?t=${Date.now()}`);
+        // Используем changelog-api папку чтобы избежать кеша GitHub Pages
+        let response = await fetch(`./changelog-api/current.json?t=${Date.now()}`);
 
         if (!response.ok) {
-            response = await fetch(`../data/changelog-v2.json?t=${Date.now()}`);
-        }
-
-        if (!response.ok) {
-            // fallback на старый файл если новый не существует
-            response = await fetch(`./data/changelog.json?t=${Date.now()}`);
-        }
-
-        if (!response.ok) {
-            response = await fetch(`../data/changelog.json?t=${Date.now()}`);
+            response = await fetch(`../changelog-api/current.json?t=${Date.now()}`);
         }
 
         if (!response.ok) {
