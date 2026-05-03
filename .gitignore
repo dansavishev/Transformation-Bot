@@ -1,5 +1,6 @@
 data/*
 !data/changelog.json
+!data/changelog-v2.json
 venv/
 __pycache__/
 *.pyc

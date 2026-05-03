@@ -49,10 +49,14 @@ def _merge_to_changelog(entries: list) -> Path:
     web_dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(changelog_file, web_dest)
 
+    # Копируем также в changelog-v2.json чтобы избежать кеша GitHub Pages
+    web_dest_v2 = Path("/opt/transformation-bot/data/changelog-v2.json")
+    shutil.copy2(changelog_file, web_dest_v2)
+
     # ДОЛГОСРОЧНОЕ РЕШЕНИЕ: автоматический git push
     try:
         subprocess.run(
-            ['git', 'add', 'data/changelog.json'],
+            ['git', 'add', 'data/changelog.json', 'data/changelog-v2.json'],
             cwd=str(PROJECT_DIR),
             check=True,
             capture_output=True,
